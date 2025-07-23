@@ -1,6 +1,6 @@
 import requests
 from functools import lru_cache
-from datetime import datetime, timezone  
+from datetime import datetime, timedelta, timezone  
 """
 This provides provides functions to convert between different currencies using the Coinbase API.
 It supports both fiat currencies and Bitcoin (BTC) conversions.
@@ -29,6 +29,23 @@ def get_coinbase_time() -> datetime:
     js = resp.json()
     idk = js["data"]["iso"].replace("Z", "+00:00")
     return datetime.fromisoformat(idk)
+def get_spot_history(pair: str, start: str, end: str) -> dict:
+    """
+    Fetch daily spot prices for a trading pair from Coinbase V2.
+    """
+    ymd = "%Y-%m-%d"
+    d0  = datetime.strptime(start, ymd)
+    d1  = datetime.strptime(end,   ymd)
+    out = {}
+    while d0 <= d1:
+        date_str = d0.strftime(ymd)
+        url  = f"https://api.coinbase.com/v2/prices/{pair}/spot"
+        resp = requests.get(url, params={"date": date_str}, timeout=5)
+        resp.raise_for_status()
+        amt  = float(resp.json()["data"]["amount"])
+        out[date_str] = amt
+        d0 += timedelta(days=1)
+    return out
 
 def convert_currency(from_currency: str, to_currency: str, amount: float) -> float:
     """

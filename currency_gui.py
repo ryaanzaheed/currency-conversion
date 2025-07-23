@@ -1,5 +1,8 @@
 import tkinter as tk
-from currency_converter import convert_currency, get_exchange_rates
+from datetime import datetime, timedelta, timezone
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from currency_converter import convert_currency, get_spot_history
 
 #Build GUI window
 root = tk.Tk()
@@ -42,15 +45,65 @@ def on_convert():
                 result_str = f"{r:,.2f}"
 
         label_result.config(text=f"{a} {f} = {result_str} {t}")
-        ts = getattr(get_exchange_rates, "last_fetch_time", None)
-        if ts:
-            
-            label_ts.config(text="As of " + ts.strftime("%Y‑%m‑%d %H:%M UTC"))
     except Exception:
         label_result.config(text="Conversion error: check your inputs.")
 
+def on_show_history():
+    f = entry_from.get().strip().upper()
+    t = entry_to.get().strip().upper()
+    pair = f"{f}-{t}"
+
+    #amt user entered
+    try:
+        amt = float(entry_amt.get().strip())
+    except ValueError:
+        label_result.config(text="Enter a valid amount for history.")
+        return
+
+    #last 7 days
+    today = datetime.now(timezone.utc).date()
+    start = (today - timedelta(days=6)).isoformat()
+    end = today.isoformat()
+
+    try:
+        hist = get_spot_history(pair, start, end)
+    except Exception as e:
+        label_result.config(text=f"History error: {e}")
+        return
+
+    dates = sorted(hist)
+    xs= [datetime.fromisoformat(d) for d in dates]
+    #scale numbers so it looks normal
+    ys= [hist[d] * amt for d in dates]
+
+    #plot it
+    fig, ax = plt.subplots(figsize=(6,3), dpi=100)
+    ax.plot(xs, ys, marker="o")
+    ax.set_title(f"{amt:,.2f} {f} → {t} (Last 7 Days)")
+    ax.set_xlabel("Date")
+    ax.set_ylabel(f"Value ({t})")
+
+    #disable scientific notation on y‑axis so it looks normal
+    ax.ticklabel_format(axis="y", style="plain", useOffset=False)
+
+    fig.autofmt_xdate()
+    fig.tight_layout()
+
+        #clear previous history canvas if it exists
+    global history_canvas
+    try:
+        history_canvas.get_tk_widget().destroy()
+    except NameError:
+        pass
+    history_canvas = FigureCanvasTkAgg(fig, master=root)
+    history_canvas.draw()
+    history_canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 #Convert button
-btn = tk.Button(root, text="Convert", command=on_convert)
-btn.pack(pady=(0,10))
+btn_convert = tk.Button(root, text="Convert", command=on_convert)
+btn_convert.pack(side="left",  padx=20, pady=10)
+
+btn_hist= tk.Button(root, text="Show 7 Day History", command=on_show_history)
+btn_hist.pack(side="right", padx=20, pady=10)
+
 
 root.mainloop()

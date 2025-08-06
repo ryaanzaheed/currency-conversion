@@ -42,6 +42,14 @@ print(f"100 USD = {amount_in_eur:.2f} EUR")
 ```bash
 python currency_gui.py
 ```
+## Acknowledgements
+
+- **Coinbase API** maintainers for providing free and reliable exchange-rate data.  
+- **Requests** library authors for an easy-to-use HTTP client in Python.  
+- **Matplotlib** contributors for the plotting framework used in the GUI history chart.  
+- The **Tkinter** team for the built-in Python GUI toolkit.  
+
+
 
 ## License
 **MIT License**

@@ -22,5 +22,5 @@ A simple Python-based currency converter supporting both fiat currencies and Bit
 
 1. **Clone the repo**  
    ```bash
-   git clone https://github.com/your-username/currency-converter.git
+   git clone https://github.com/ryaanzaheed/currency-converter.git
    cd currency-converter
